@@ -19,7 +19,7 @@ required-features = ["ratatui"]
 default = ["tui"]
 
 [dependencies]
-ratatui = { version = "0.21", default-features = false, optional = true }
+ratatui = { version = "0.22", default-features = false, optional = true }
 tui = { version = "0.19", default-features = false, optional = true }
 unicode-width = "0.1"
 
