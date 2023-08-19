@@ -14,6 +14,7 @@ use self::tui::{
     widgets::{Block, StatefulWidget, Widget},
 };
 use std::collections::HashSet;
+use std::fmt::Debug;
 use unicode_width::UnicodeWidthStr;
 
 mod flatten;
@@ -111,7 +112,7 @@ impl TreeState {
     }
 
     /// Select the last node.
-    pub fn select_last(&mut self, items: &[TreeItem]) {
+    pub fn select_last<I>(&mut self, items: &[TreeItem<I>]) {
         let visible = flatten(&self.get_all_opened(), items);
         let new_identifier = visible
             .last()
@@ -122,7 +123,7 @@ impl TreeState {
 
     /// Handles the up arrow key.
     /// Moves up in the current depth or to its parent.
-    pub fn key_up(&mut self, items: &[TreeItem]) {
+    pub fn key_up<I>(&mut self, items: &[TreeItem<I>]) {
         let visible = flatten(&self.get_all_opened(), items);
         let current_identifier = self.selected();
         let current_index = visible
@@ -140,7 +141,7 @@ impl TreeState {
 
     /// Handles the down arrow key.
     /// Moves down in the current depth or into a child node.
-    pub fn key_down(&mut self, items: &[TreeItem]) {
+    pub fn key_down<I>(&mut self, items: &[TreeItem<I>]) {
         let visible = flatten(&self.get_all_opened(), items);
         let current_identifier = self.selected();
         let current_index = visible
@@ -173,7 +174,6 @@ impl TreeState {
     }
 }
 
-/// One item inside a [`Tree`]
 ///
 /// Can zero or more `children`.
 ///
@@ -185,15 +185,19 @@ impl TreeState {
 /// let b = TreeItem::new("root", vec![a]);
 /// ```
 #[derive(Debug, Clone)]
-pub struct TreeItem<'a> {
+pub struct TreeItem<'a, I> {
     text: Text<'a>,
     style: Style,
-    children: Vec<TreeItem<'a>>,
+    children: Vec<TreeItem<'a, I>>,
+    inner: I,
 }
 
-impl<'a> TreeItem<'a> {
+impl<'a, I> TreeItem<'a, I>
+where
+    I: Debug + Clone,
+{
     #[must_use]
-    pub fn new_leaf<T>(text: T) -> Self
+    pub fn new_leaf<T>(text: T, item: I) -> Self
     where
         T: Into<Text<'a>>,
     {
@@ -201,24 +205,26 @@ impl<'a> TreeItem<'a> {
             text: text.into(),
             style: Style::default(),
             children: Vec::new(),
+            inner: item,
         }
     }
 
     #[must_use]
-    pub fn new<T, Children>(text: T, children: Children) -> Self
+    pub fn new<T, Children>(text: T, item: I, children: Children) -> Self
     where
         T: Into<Text<'a>>,
-        Children: Into<Vec<TreeItem<'a>>>,
+        Children: Into<Vec<TreeItem<'a, I>>>,
     {
         Self {
             text: text.into(),
             style: Style::default(),
             children: children.into(),
+            inner: item,
         }
     }
 
     #[must_use]
-    pub fn children(&self) -> &[TreeItem] {
+    pub fn children(&self) -> &[TreeItem<'a, I>] {
         &self.children
     }
 
@@ -243,8 +249,20 @@ impl<'a> TreeItem<'a> {
         self
     }
 
-    pub fn add_child(&mut self, child: TreeItem<'a>) {
+    pub fn add_child(&mut self, child: TreeItem<'a, I>) {
         self.children.push(child);
+    }
+
+    pub fn inner(&self) -> &I {
+        &self.inner
+    }
+
+    pub fn inner_mut(&mut self) -> &mut I {
+        &mut self.inner
+    }
+
+    pub fn into_inner(self) -> I {
+        self.inner
     }
 }
 
@@ -277,8 +295,8 @@ impl<'a> TreeItem<'a> {
 /// # }
 /// ```
 #[derive(Debug, Clone)]
-pub struct Tree<'a> {
-    items: Vec<TreeItem<'a>>,
+pub struct Tree<'a, I> {
+    items: Vec<TreeItem<'a, I>>,
 
     block: Option<Block<'a>>,
     start_corner: Corner,
@@ -298,11 +316,11 @@ pub struct Tree<'a> {
     node_no_children_symbol: &'a str,
 }
 
-impl<'a> Tree<'a> {
+impl<'a, I> Tree<'a, I> {
     #[must_use]
     pub fn new<T>(items: T) -> Self
     where
-        T: Into<Vec<TreeItem<'a>>>,
+        T: Into<Vec<TreeItem<'a, I>>>,
     {
         Self {
             items: items.into(),
@@ -367,7 +385,10 @@ impl<'a> Tree<'a> {
     }
 }
 
-impl<'a> StatefulWidget for Tree<'a> {
+impl<'a, I> StatefulWidget for Tree<'a, I>
+where
+    I: Debug + Clone,
+{
     type State = TreeState;
 
     #[allow(clippy::too_many_lines)]
@@ -501,7 +522,10 @@ impl<'a> StatefulWidget for Tree<'a> {
     }
 }
 
-impl<'a> Widget for Tree<'a> {
+impl<'a, I> Widget for Tree<'a, I>
+where
+    I: Debug + Clone,
+{
     fn render(self, area: Rect, buf: &mut Buffer) {
         let mut state = TreeState::default();
         StatefulWidget::render(self, area, buf, &mut state);

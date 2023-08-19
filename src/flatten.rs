@@ -1,12 +1,12 @@
 use crate::identifier::{TreeIdentifier, TreeIdentifierVec};
 use crate::TreeItem;
 
-pub struct Flattened<'a> {
+pub struct Flattened<'a, I> {
     pub identifier: Vec<usize>,
-    pub item: &'a TreeItem<'a>,
+    pub item: &'a TreeItem<'a, I>,
 }
 
-impl<'a> Flattened<'a> {
+impl<'a, I> Flattened<'a, I> {
     #[must_use]
     pub fn depth(&self) -> usize {
         self.identifier.len() - 1
@@ -15,16 +15,16 @@ impl<'a> Flattened<'a> {
 
 /// Get a flat list of all visible [`TreeItem`s](TreeItem)
 #[must_use]
-pub fn flatten<'a>(opened: &[TreeIdentifierVec], items: &'a [TreeItem<'a>]) -> Vec<Flattened<'a>> {
+pub fn flatten<'a, I>(opened: &[TreeIdentifierVec], items: &'a [TreeItem<'a, I>]) -> Vec<Flattened<'a, I>> {
     internal(opened, items, &[])
 }
 
 #[must_use]
-fn internal<'a>(
+fn internal<'a, I>(
     opened: &[TreeIdentifierVec],
-    items: &'a [TreeItem<'a>],
+    items: &'a [TreeItem<'a, I>],
     current: TreeIdentifier,
-) -> Vec<Flattened<'a>> {
+) -> Vec<Flattened<'a, I>> {
     let mut result = Vec::new();
 
     for (index, item) in items.iter().enumerate() {
