@@ -72,16 +72,16 @@ fn get_naive_string_from_text(text: &tui::text::Text<'_>) -> String {
 #[cfg(test)]
 fn get_example_tree_items() -> Vec<TreeItem<'static>> {
     vec![
-        TreeItem::new_leaf("a"),
+        TreeItem::new_leaf_with_name("a"),
         TreeItem::new(
             "b",
             vec![
-                TreeItem::new_leaf("c"),
-                TreeItem::new("d", vec![TreeItem::new_leaf("e"), TreeItem::new_leaf("f")]),
-                TreeItem::new_leaf("g"),
+                TreeItem::new_leaf_with_name("c"),
+                TreeItem::new("d", vec![TreeItem::new_leaf_with_name("e"), TreeItem::new_leaf_with_name("f")]),
+                TreeItem::new_leaf_with_name("g"),
             ],
         ),
-        TreeItem::new_leaf("h"),
+        TreeItem::new_leaf_with_name("h"),
     ]
 }
 

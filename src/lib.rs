@@ -13,7 +13,7 @@ use self::tui::{
     text::Text,
     widgets::{Block, StatefulWidget, Widget},
 };
-use std::collections::HashSet;
+use std::{collections::HashSet, fmt::Display};
 use std::fmt::Debug;
 use unicode_width::UnicodeWidthStr;
 
@@ -194,15 +194,13 @@ pub struct TreeItem<'a, I> {
 
 impl<'a, I> TreeItem<'a, I>
 where
-    I: Debug + Clone,
+    I: Debug + Display + Clone,
 {
     #[must_use]
-    pub fn new_leaf<T>(text: T, item: I) -> Self
-    where
-        T: Into<Text<'a>>,
+    pub fn new_leaf(item: I) -> Self
     {
         Self {
-            text: text.into(),
+            text: Text::raw(item.to_string()),
             style: Style::default(),
             children: Vec::new(),
             inner: item,
@@ -210,13 +208,12 @@ where
     }
 
     #[must_use]
-    pub fn new<T, Children>(text: T, item: I, children: Children) -> Self
+    pub fn new<Children>(item: I, children: Children) -> Self
     where
-        T: Into<Text<'a>>,
         Children: Into<Vec<TreeItem<'a, I>>>,
     {
         Self {
-            text: text.into(),
+            text: Text::raw(item.to_string()),
             style: Style::default(),
             children: children.into(),
             inner: item,
@@ -387,7 +384,7 @@ impl<'a, I> Tree<'a, I> {
 
 impl<'a, I> StatefulWidget for Tree<'a, I>
 where
-    I: Debug + Clone,
+    I: Debug + Clone + Display,
 {
     type State = TreeState;
 
@@ -524,7 +521,7 @@ where
 
 impl<'a, I> Widget for Tree<'a, I>
 where
-    I: Debug + Clone,
+    I: Debug + Clone + Display,
 {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let mut state = TreeState::default();
